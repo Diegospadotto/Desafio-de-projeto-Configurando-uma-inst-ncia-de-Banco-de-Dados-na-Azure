@@ -1,0 +1,92 @@
+-- 1️⃣ CRIANDO O BANCO DE DADOS (Executar no Azure SQL Server)
+CREATE DATABASE db_ecommerce;
+GO
+USE db_ecommerce;
+GO
+
+-- 2️⃣ CRIANDO TABELAS  
+CREATE TABLE Produtos (
+    ID INT IDENTITY PRIMARY KEY,
+    Nome NVARCHAR(100) NOT NULL,
+    Preco DECIMAL(10,2) NOT NULL,
+    Estoque INT NOT NULL
+);
+GO
+
+CREATE TABLE Clientes (
+    ID INT IDENTITY PRIMARY KEY,
+    Nome NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(150) UNIQUE NOT NULL,
+    DataCadastro DATETIME DEFAULT GETDATE()
+);
+GO
+
+CREATE TABLE Pedidos (
+    ID INT IDENTITY PRIMARY KEY,
+    ClienteID INT NOT NULL,
+    DataPedido DATETIME DEFAULT GETDATE(),
+    Status NVARCHAR(50) DEFAULT 'Pendente',
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ID)
+);
+GO
+
+CREATE TABLE ItensPedido (
+    ID INT IDENTITY PRIMARY KEY,
+    PedidoID INT NOT NULL,
+    ProdutoID INT NOT NULL,
+    Quantidade INT NOT NULL,
+    PrecoUnitario DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(ID),
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ID)
+);
+GO
+
+-- 3️⃣ INSERINDO DADOS EXEMPLO  
+INSERT INTO Produtos (Nome, Preco, Estoque) VALUES 
+('Notebook Gamer', 6500.00, 10),
+('Teclado Mecânico', 350.00, 25),
+('Monitor 144Hz', 1200.00, 15);
+GO
+
+INSERT INTO Clientes (Nome, Email) VALUES 
+('Diego Souza', 'diego@email.com'),
+('Ana Pereira', 'ana@email.com');
+GO
+
+INSERT INTO Pedidos (ClienteID) VALUES 
+(1), (2);
+GO
+
+INSERT INTO ItensPedido (PedidoID, ProdutoID, Quantidade, PrecoUnitario) VALUES 
+(1, 1, 1, 6500.00),
+(1, 2, 2, 350.00),
+(2, 3, 1, 1200.00);
+GO
+
+-- 4️⃣ CRIANDO ÍNDICES PARA PERFORMANCE  
+CREATE INDEX idx_produto_nome ON Produtos(Nome);
+CREATE INDEX idx_cliente_email ON Clientes(Email);
+CREATE INDEX idx_pedido_cliente ON Pedidos(ClienteID);
+GO
+
+-- 5️⃣ CRIANDO USUÁRIOS COM PERMISSÕES  
+-- Criando um usuário somente leitura  
+CREATE USER leitor WITH PASSWORD = 'SenhaForte!';
+ALTER ROLE db_datareader ADD MEMBER leitor;
+GO
+
+-- Criando um usuário para escrita  
+CREATE USER escritor WITH PASSWORD = 'SenhaForte!';
+ALTER ROLE db_datawriter ADD MEMBER escritor;
+GO
+
+-- 6️⃣ CONSULTAS PARA TESTES  
+-- Listar todos os produtos  
+SELECT * FROM Produtos;
+
+-- Verificar pedidos de um cliente específico  
+SELECT P.ID AS PedidoID, C.Nome AS Cliente, P.DataPedido, P.Status
+FROM Pedidos P
+JOIN Clientes C ON P.ClienteID = C.ID
+WHERE C.Email = 'diego@email.com';
+GO
